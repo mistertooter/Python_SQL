@@ -1,0 +1,824 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Python + SQL Data Pipeline</title>
+
+<style>
+* {
+    box-sizing: border-box;
+}
+
+html, body {
+    margin: 0;
+    min-height: 100%;
+    background:
+        radial-gradient(circle at 50% 20%, #152d50 0%, #071321 35%, #02060d 80%);
+    font-family: Arial, Helvetica, sans-serif;
+    color: white;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* -------------------------------------------------
+   INSTAGRAM 3:4 CANVAS
+-------------------------------------------------- */
+
+.scene {
+    position: relative;
+    width: min(90vw, 750px);
+    aspect-ratio: 3 / 4;
+    overflow: hidden;
+    border-radius: 28px;
+
+    background:
+        radial-gradient(circle at 20% 25%, rgba(0,180,255,.15), transparent 30%),
+        radial-gradient(circle at 80% 70%, rgba(180,0,255,.13), transparent 35%),
+        linear-gradient(145deg,#071524,#02060d);
+
+    border: 1px solid rgba(120,210,255,.25);
+
+    box-shadow:
+        0 0 50px rgba(0,170,255,.18),
+        inset 0 0 100px rgba(0,0,0,.7);
+}
+
+/* cinematic moving background */
+
+.scene::before {
+    content: "";
+    position: absolute;
+    inset: -50%;
+
+    background-image:
+        linear-gradient(rgba(70,190,255,.035) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(70,190,255,.035) 1px, transparent 1px);
+
+    background-size: 45px 45px;
+
+    transform: perspective(500px) rotateX(55deg);
+    animation: gridMove 12s linear infinite;
+}
+
+@keyframes gridMove {
+    from { transform: perspective(500px) rotateX(55deg) translateY(0); }
+    to   { transform: perspective(500px) rotateX(55deg) translateY(90px); }
+}
+
+/* -------------------------------------------------
+   HEADER
+-------------------------------------------------- */
+
+.header {
+    position: absolute;
+    width: 100%;
+    top: 3%;
+    text-align: center;
+    z-index: 10;
+}
+
+.header h1 {
+    margin: 0;
+    font-size: clamp(24px, 5vw, 42px);
+    letter-spacing: 3px;
+
+    background: linear-gradient(90deg,#49d8ff,#ffffff,#ffe657);
+    -webkit-background-clip: text;
+    color: transparent;
+}
+
+.header p {
+    margin: 8px 0;
+    color: #91a9bd;
+    letter-spacing: 2px;
+    font-size: 12px;
+}
+
+/* -------------------------------------------------
+   PYTHON PANEL
+-------------------------------------------------- */
+
+.python-panel,
+.sql-panel {
+    position: absolute;
+    top: 16%;
+    width: 38%;
+    height: 29%;
+
+    border-radius: 18px;
+    padding: 15px;
+
+    background:
+        linear-gradient(145deg,
+        rgba(20,45,70,.94),
+        rgba(5,12,22,.96));
+
+    border: 1px solid rgba(90,200,255,.35);
+
+    box-shadow:
+        0 0 30px rgba(0,150,255,.13),
+        inset 0 0 30px rgba(0,100,180,.08);
+
+    z-index: 5;
+}
+
+.python-panel {
+    left: 5%;
+}
+
+.sql-panel {
+    right: 5%;
+    border-color: rgba(255,210,70,.35);
+}
+
+.panel-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: bold;
+    letter-spacing: 2px;
+}
+
+.python-panel .panel-title {
+    color: #55c9ff;
+}
+
+.sql-panel .panel-title {
+    color: #ffd84a;
+}
+
+.icon {
+    width: 32px;
+    height: 32px;
+    display: grid;
+    place-items: center;
+
+    border-radius: 8px;
+    font-weight: bold;
+}
+
+.python-panel .icon {
+    background: #347ab4;
+    color: #ffe34d;
+}
+
+.sql-panel .icon {
+    background: #f2b632;
+    color: #15202c;
+}
+
+.code {
+    margin-top: 14px;
+
+    background: rgba(0,0,0,.45);
+    padding: 10px;
+    border-radius: 10px;
+
+    font-family: Consolas, monospace;
+    font-size: clamp(8px, 1.4vw, 12px);
+    line-height: 1.6;
+
+    color: #b7e8ff;
+}
+
+.keyword {
+    color: #ff6dd8;
+}
+
+.string {
+    color: #ffe66d;
+}
+
+.sql {
+    color: #6ef5c2;
+}
+
+/* -------------------------------------------------
+   DATABASE
+-------------------------------------------------- */
+
+.database {
+    position: absolute;
+    left: 50%;
+    top: 53%;
+
+    transform: translate(-50%,-50%);
+
+    width: 130px;
+    height: 115px;
+
+    z-index: 6;
+}
+
+.db-top,
+.db-layer {
+    position: absolute;
+    left: 0;
+    width: 130px;
+    height: 42px;
+
+    border-radius: 50%;
+
+    border: 2px solid #ffd74b;
+
+    background:
+        radial-gradient(ellipse at center,
+        #5a4914,
+        #1d1906 65%);
+
+    box-shadow:
+        0 0 25px rgba(255,210,50,.45);
+}
+
+.db-top {
+    top: 0;
+    z-index: 5;
+}
+
+.db-layer:nth-child(2) {
+    top: 25px;
+}
+
+.db-layer:nth-child(3) {
+    top: 50px;
+}
+
+.db-layer:nth-child(4) {
+    top: 75px;
+}
+
+.database-label {
+    position: absolute;
+    width: 100%;
+    text-align: center;
+    top: 42px;
+
+    font-weight: bold;
+    color: white;
+    z-index: 10;
+
+    text-shadow: 0 0 8px #000;
+}
+
+/* database pulse */
+
+.database {
+    animation: dbPulse 2s ease-in-out infinite;
+}
+
+@keyframes dbPulse {
+    0%,100% {
+        filter: brightness(1);
+    }
+    50% {
+        filter: brightness(1.5);
+    }
+}
+
+/* -------------------------------------------------
+   DATA PATHS
+-------------------------------------------------- */
+
+.connection {
+    position: absolute;
+    height: 3px;
+
+    background:
+        linear-gradient(90deg,
+        transparent,
+        #48d8ff,
+        #ffffff,
+        transparent);
+
+    box-shadow: 0 0 10px #48d8ff;
+    z-index: 3;
+}
+
+.query-line {
+    width: 25%;
+    top: 40%;
+    left: 28%;
+    transform: rotate(25deg);
+}
+
+.result-line {
+    width: 25%;
+    top: 40%;
+    right: 28%;
+    transform: rotate(-25deg);
+
+    background:
+        linear-gradient(90deg,
+        transparent,
+        #ffe14b,
+        white,
+        transparent);
+
+    box-shadow: 0 0 10px #ffe14b;
+}
+
+/* moving data packets */
+
+.packet {
+    position: absolute;
+    width: 11px;
+    height: 11px;
+
+    border-radius: 50%;
+
+    background: white;
+
+    box-shadow:
+        0 0 8px white,
+        0 0 18px #00d9ff,
+        0 0 30px #00d9ff;
+
+    z-index: 20;
+}
+
+.packet.query {
+    animation: queryPacket 2.8s linear infinite;
+}
+
+.packet.result {
+    animation: resultPacket 2.8s linear infinite;
+    animation-delay: 1.4s;
+
+    box-shadow:
+        0 0 8px white,
+        0 0 18px #ffe14b,
+        0 0 30px #ffe14b;
+}
+
+@keyframes queryPacket {
+
+    0% {
+        left: 25%;
+        top: 34%;
+        opacity: 0;
+    }
+
+    10% {
+        opacity: 1;
+    }
+
+    50% {
+        left: 50%;
+        top: 50%;
+    }
+
+    100% {
+        left: 50%;
+        top: 50%;
+        opacity: 0;
+    }
+}
+
+@keyframes resultPacket {
+
+    0% {
+        left: 50%;
+        top: 50%;
+        opacity: 0;
+    }
+
+    10% {
+        opacity: 1;
+    }
+
+    100% {
+        left: 76%;
+        top: 34%;
+        opacity: 0;
+    }
+}
+
+/* -------------------------------------------------
+   STATUS
+-------------------------------------------------- */
+
+.status {
+    position: absolute;
+
+    left: 50%;
+    top: 64%;
+
+    transform: translateX(-50%);
+
+    width: 80%;
+
+    text-align: center;
+
+    padding: 11px;
+
+    border-radius: 30px;
+
+    background: rgba(5,20,32,.8);
+
+    border: 1px solid rgba(80,220,255,.25);
+
+    color: #83e9ff;
+
+    letter-spacing: 1px;
+
+    z-index: 10;
+}
+
+/* -------------------------------------------------
+   RESULT VISUALIZATION
+-------------------------------------------------- */
+
+.result-panel {
+    position: absolute;
+
+    left: 8%;
+    bottom: 5%;
+
+    width: 84%;
+    height: 24%;
+
+    border-radius: 18px;
+
+    background:
+        linear-gradient(180deg,
+        rgba(15,40,60,.9),
+        rgba(3,9,17,.96));
+
+    border: 1px solid rgba(100,220,255,.25);
+
+    padding: 14px;
+
+    z-index: 5;
+}
+
+.result-title {
+    font-size: 12px;
+    letter-spacing: 2px;
+    color: #88ddff;
+}
+
+/* chart */
+
+.chart {
+    position: absolute;
+
+    bottom: 20px;
+    left: 8%;
+
+    width: 84%;
+    height: 65%;
+
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-around;
+
+    border-left: 1px solid #456;
+    border-bottom: 1px solid #456;
+}
+
+.bar {
+    width: 12%;
+    height: 5%;
+
+    border-radius: 5px 5px 0 0;
+
+    background:
+        linear-gradient(to top,
+        #086da8,
+        #21d4ff);
+
+    box-shadow:
+        0 0 12px rgba(0,210,255,.6);
+
+    transition: height 1s ease;
+}
+
+.bar:nth-child(even) {
+    background:
+        linear-gradient(to top,
+        #9c6410,
+        #ffe15a);
+
+    box-shadow:
+        0 0 12px rgba(255,210,50,.6);
+}
+
+/* floating particles */
+
+.particle {
+    position: absolute;
+
+    width: 3px;
+    height: 3px;
+
+    border-radius: 50%;
+
+    background: #65ddff;
+
+    opacity: .5;
+
+    animation: floatParticle linear infinite;
+}
+
+@keyframes floatParticle {
+    from {
+        transform: translateY(1000px);
+        opacity: 0;
+    }
+
+    20% {
+        opacity: .7;
+    }
+
+    to {
+        transform: translateY(-100px);
+        opacity: 0;
+    }
+}
+
+/* -------------------------------------------------
+   LABELS
+-------------------------------------------------- */
+
+.flow-label {
+    position: absolute;
+
+    font-size: 10px;
+    letter-spacing: 1px;
+
+    color: #8ddfff;
+
+    z-index: 12;
+}
+
+.send-label {
+    left: 34%;
+    top: 42%;
+}
+
+.return-label {
+    right: 31%;
+    top: 42%;
+    color: #ffe064;
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="scene" id="scene">
+
+    <div class="header">
+        <h1>PYTHON × SQL</h1>
+        <p>FROM DATABASE QUERY TO DATA INTELLIGENCE</p>
+    </div>
+
+    <!-- PYTHON -->
+
+    <div class="python-panel">
+
+        <div class="panel-title">
+            <div class="icon">Py</div>
+            PYTHON
+        </div>
+
+        <div class="code">
+<span class="keyword">import</span> sqlite3<br><br>
+
+conn = sqlite3.connect(<span class="string">"sales.db"</span>)<br>
+
+cursor = conn.cursor()<br><br>
+
+cursor.execute(<br>
+&nbsp;&nbsp;<span class="string">"SELECT product, sales<br>
+&nbsp;&nbsp;FROM orders<br>
+&nbsp;&nbsp;ORDER BY sales DESC"</span><br>
+)<br><br>
+
+rows = cursor.fetchall()
+        </div>
+
+    </div>
+
+    <!-- SQL -->
+
+    <div class="sql-panel">
+
+        <div class="panel-title">
+            <div class="icon">DB</div>
+            SQL ENGINE
+        </div>
+
+        <div class="code sql">
+
+SELECT<br>
+&nbsp;&nbsp;product,<br>
+&nbsp;&nbsp;SUM(amount) AS sales<br><br>
+
+FROM orders<br><br>
+
+GROUP BY product<br>
+
+ORDER BY sales DESC;
+
+        </div>
+
+    </div>
+
+    <!-- CONNECTIONS -->
+
+    <div class="connection query-line"></div>
+    <div class="connection result-line"></div>
+
+    <div class="flow-label send-label">
+        QUERY →
+    </div>
+
+    <div class="flow-label return-label">
+        ← RESULTS
+    </div>
+
+    <!-- animated packets -->
+
+    <div class="packet query"></div>
+    <div class="packet query" style="animation-delay:.7s"></div>
+    <div class="packet query" style="animation-delay:1.4s"></div>
+
+    <div class="packet result"></div>
+    <div class="packet result" style="animation-delay:2s"></div>
+
+    <!-- DATABASE -->
+
+    <div class="database">
+
+        <div class="db-top"></div>
+        <div class="db-layer"></div>
+        <div class="db-layer"></div>
+        <div class="db-layer"></div>
+
+        <div class="database-label">
+            SALES<br>DATABASE
+        </div>
+
+    </div>
+
+    <!-- STATUS -->
+
+    <div class="status" id="status">
+        Python establishes database connection...
+    </div>
+
+    <!-- RESULTS -->
+
+    <div class="result-panel">
+
+        <div class="result-title">
+            PYTHON DATA VISUALIZATION • QUERY RESULTS
+        </div>
+
+        <div class="chart">
+
+            <div class="bar"></div>
+            <div class="bar"></div>
+            <div class="bar"></div>
+            <div class="bar"></div>
+            <div class="bar"></div>
+            <div class="bar"></div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<script>
+
+/* ------------------------------------------------
+   STATUS ANIMATION
+------------------------------------------------ */
+
+const statusMessages = [
+
+    "Python establishes database connection...",
+
+    "Python sends SQL query →",
+
+    "SQL engine parses SELECT statement...",
+
+    "Database searches matching records...",
+
+    "SQL aggregates and sorts data...",
+
+    "← Result rows returned to Python",
+
+    "Python converts rows into usable data...",
+
+    "Visualization generated from SQL results"
+
+];
+
+let statusIndex = 0;
+
+const status = document.getElementById("status");
+
+setInterval(() => {
+
+    statusIndex++;
+
+    if(statusIndex >= statusMessages.length) {
+        statusIndex = 0;
+    }
+
+    status.style.opacity = 0;
+
+    setTimeout(() => {
+
+        status.textContent = statusMessages[statusIndex];
+
+        status.style.opacity = 1;
+
+    },300);
+
+},1800);
+
+
+/* ------------------------------------------------
+   ANIMATED RESULT CHART
+------------------------------------------------ */
+
+const bars = document.querySelectorAll(".bar");
+
+function animateChart() {
+
+    bars.forEach((bar,index) => {
+
+        const heights = [
+            35,
+            68,
+            48,
+            88,
+            60,
+            78
+        ];
+
+        setTimeout(() => {
+
+            bar.style.height =
+                heights[index] + "%";
+
+        }, index * 120);
+
+    });
+
+}
+
+setInterval(() => {
+
+    bars.forEach(bar => {
+        bar.style.height = "5%";
+    });
+
+    setTimeout(animateChart,600);
+
+},5000);
+
+animateChart();
+
+
+/* ------------------------------------------------
+   CINEMATIC BACKGROUND PARTICLES
+------------------------------------------------ */
+
+const scene =
+    document.getElementById("scene");
+
+for(let i = 0; i < 45; i++) {
+
+    const particle =
+        document.createElement("div");
+
+    particle.className = "particle";
+
+    particle.style.left =
+        Math.random() * 100 + "%";
+
+    particle.style.top =
+        Math.random() * 100 + "%";
+
+    particle.style.animationDuration =
+        (5 + Math.random() * 10) + "s";
+
+    particle.style.animationDelay =
+        (-Math.random() * 10) + "s";
+
+    scene.appendChild(particle);
+}
+
+</script>
+
+</body>
+</html>
